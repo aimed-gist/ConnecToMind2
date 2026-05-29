@@ -1,0 +1,43 @@
+# Accelerate Configuration for ConnecToMind2 (DeepSpeed ZeRO-2)
+#
+# 사용 방법:
+#   accelerate launch --config_file configs/accelerate_config.yaml main_accelerate.py
+#
+# 주의: deepspeed_config_file 사용 시, 아래 설정들은 DeepSpeed config에서만 정의해야 함:
+#   - mixed_precision (bf16/fp16)
+#   - zero_stage
+#   - gradient_accumulation_steps
+#   - gradient_clipping
+#   - offload 설정들
+
+compute_environment: LOCAL_MACHINE
+
+# ============ Distributed Training Settings ============
+distributed_type: DEEPSPEED
+num_processes: 6               # 사용할 GPU 개수 (환경에 맞게 조정)
+gpu_ids: "0,1,2,3,4,5"         # 특정 GPU 지정 (문자열 형식)
+
+# ============ DeepSpeed Settings ============
+# deepspeed_config_file 사용 시 mixed_precision, zero_stage 등은
+# DeepSpeed config JSON 파일에서 정의됨
+deepspeed_config:
+  deepspeed_config_file: configs/deepspeed_config.json
+  zero3_init_flag: false       # ZeRO-2 사용하므로 false
+
+# ============ Backend Settings ============
+machine_rank: 0
+main_training_function: main
+num_machines: 1
+rdzv_backend: static
+same_network: true
+tpu_env: []
+tpu_use_cluster: false
+tpu_use_sudo: false
+use_cpu: false
+
+# ============ 주의사항 ============
+# 1. num_processes는 사용 가능한 GPU 수에 맞게 조정
+# 2. batch_size는 GPU당 배치 크기 (Total = batch_size × num_processes)
+# 3. DeepSpeed ZeRO-2는 optimizer state + gradient를 GPU 간 분산
+# 4. 메모리 절감 효과: 약 50-60% (6 GPU 기준)
+# 5. 모든 DeepSpeed 관련 설정은 deepspeed_config.json에서 관리
